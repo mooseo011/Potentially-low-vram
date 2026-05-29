@@ -1,0 +1,83 @@
+Screen {
+    layers: base overlay;
+}
+
+#banner {
+    height: auto;
+    padding: 0 1;
+    color: $text;
+    background: $panel;
+}
+
+TabbedContent {
+    height: 1fr;
+}
+
+/* ---- Chat ---- */
+#chat-log {
+    height: 1fr;
+    border: round $primary;
+    padding: 0 1;
+}
+
+#chat-input-row {
+    height: auto;
+    padding: 1 0 0 0;
+}
+
+#chat-input {
+    width: 1fr;
+}
+
+.status-line {
+    height: auto;
+    color: $text-muted;
+    padding: 0 1;
+}
+
+/* ---- System / Models / Setup panels ---- */
+.panel {
+    height: 1fr;
+    padding: 1 2;
+}
+
+.section-title {
+    text-style: bold;
+    color: $secondary;
+    padding: 1 0 0 0;
+}
+
+DataTable {
+    height: auto;
+    max-height: 18;
+}
+
+#setup-output {
+    height: 1fr;
+    border: round $accent;
+    padding: 0 1;
+}
+
+.ok { color: $success; }
+.warn { color: $warning; }
+.fail { color: $error; }
+
+.hint {
+    color: $text-muted;
+}
+
+Input.-invalid {
+    border: tall $error;
+}
+
+#models-form Input, #models-form Select {
+    width: 1fr;
+}
+
+Label {
+    padding: 1 1 0 0;
+}
+
+Button {
+    margin: 1 1 0 0;
+}

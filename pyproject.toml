@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plvram"
+version = "0.1.0"
+description = "A cross-platform TUI for running local AI models larger than your VRAM via DeepSpeed ZeRO-Inference with DeepNVMe offloading."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+authors = [{ name = "mooseo011" }]
+keywords = ["deepspeed", "deepnvme", "llm", "tui", "inference", "offload", "low-vram"]
+classifiers = [
+    "Environment :: Console",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+]
+
+# Core deps keep the TUI usable even when the heavy ML stack is absent.
+# The model backend (torch/transformers/deepspeed) is an optional extra so
+# the app can run, inspect the system, and drive setup before anything is built.
+dependencies = [
+    "textual>=0.60",
+    "rich>=13.0",
+    "psutil>=5.9",
+]
+
+[project.optional-dependencies]
+# The inference backend. Installed by the in-app setup flow, or manually.
+backend = [
+    "torch>=2.1",
+    "transformers>=4.40",
+    "accelerate>=0.30",
+    "deepspeed>=0.14",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.23",
+    "textual-dev>=1.5",
+]
+
+[project.scripts]
+plvram = "plvram.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/mooseo011/potentially-low-vram"
+
+[tool.setuptools.packages.find]
+include = ["plvram*"]
+
+[tool.setuptools.package-data]
+plvram = ["tui/*.tcss"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

@@ -1,0 +1,8 @@
+# Core TUI runtime (always required).
+textual>=0.60
+rich>=13.0
+psutil>=5.9
+
+# Inference backend is optional and large; install with:
+#   pip install -e ".[backend]"
+# or let the in-app Setup screen build it (recommended on Windows).
