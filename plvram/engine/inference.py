@@ -80,6 +80,21 @@ class InferenceEngine:
         from transformers.integrations import HfDeepSpeedConfig  # noqa: PLC0415
 
         cfg = self.cfg
+
+        # Intel XPU needs Intel Extension for PyTorch imported before use so the
+        # xpu device + DeepSpeed XPU accelerator are registered. Harmless no-op
+        # for CUDA/ROCm.
+        from .accelerator import detect_accelerator, resolve_target  # noqa: PLC0415
+
+        target = resolve_target(cfg.accelerator, detect_accelerator())
+        if target == "xpu":
+            try:
+                import intel_extension_for_pytorch as _ipex  # noqa: F401, PLC0415
+
+                say("Intel Extension for PyTorch loaded (XPU).")
+            except Exception as exc:
+                say(f"warning: could not import intel_extension_for_pytorch: {exc}")
+        say(f"Targeting accelerator: {target}")
         dtype = {
             "fp16": torch.float16,
             "bf16": torch.bfloat16,

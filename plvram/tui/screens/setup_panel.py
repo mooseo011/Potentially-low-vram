@@ -48,7 +48,8 @@ class SetupPanel(VerticalScroll):
 
     # ------------------------------------------------------------------
     def detect(self) -> None:
-        report = detect_environment()
+        accel = getattr(self.app.config, "accelerator", "auto")  # type: ignore[attr-defined]
+        report = detect_environment(accel)
         table = self.query_one("#env-table", DataTable)
         table.clear()
         for c in report.checks:

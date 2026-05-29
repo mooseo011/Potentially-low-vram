@@ -15,6 +15,7 @@ from .utils import config_dir, default_offload_dir
 
 OffloadDevice = Literal["none", "cpu", "nvme"]
 Dtype = Literal["fp16", "bf16", "fp32"]
+Accelerator = Literal["auto", "cuda", "rocm", "xpu", "cpu"]
 
 
 @dataclass
@@ -54,6 +55,8 @@ class GenerationConfig:
 class AppConfig:
     model_id: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
     dtype: Dtype = "fp16"
+    # Which DeepSpeed accelerator backend to target. "auto" detects from torch.
+    accelerator: Accelerator = "auto"
     trust_remote_code: bool = False
     offload: OffloadConfig = field(default_factory=OffloadConfig)
     generation: GenerationConfig = field(default_factory=GenerationConfig)
@@ -84,6 +87,7 @@ class AppConfig:
         known = {
             "model_id",
             "dtype",
+            "accelerator",
             "trust_remote_code",
             "recent_models",
         }

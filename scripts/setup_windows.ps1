@@ -21,6 +21,10 @@
 .PARAMETER BuildAio
     Compile the async_io op (DeepNVMe). Required for NVMe offloading.
 
+.PARAMETER Accelerator
+    Target accelerator: cuda (NVIDIA), xpu (Intel), or rocm (AMD, experimental).
+    Drives prerequisite guidance; default cuda.
+
 .PARAMETER Ref
     DeepSpeed git ref/tag to build (default: master).
 
@@ -28,11 +32,13 @@
     Python executable to use (default: the one on PATH).
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File setup_windows.ps1 -BuildAio
+    powershell -ExecutionPolicy Bypass -File setup_windows.ps1 -BuildAio -Accelerator xpu
 #>
 [CmdletBinding()]
 param(
     [switch]$BuildAio,
+    [ValidateSet("cuda", "xpu", "rocm", "cpu")]
+    [string]$Accelerator = "cuda",
     [string]$Ref = "master",
     [string]$Python = "python"
 )
@@ -77,12 +83,27 @@ if (-not (Get-Command cl.exe -ErrorAction SilentlyContinue)) {
 }
 Write-Host "cl.exe is available."
 
-# --- 2. Verify CUDA toolkit ----------------------------------------------
-Write-Step "Checking CUDA toolkit (nvcc)"
-if (Get-Command nvcc -ErrorAction SilentlyContinue) {
-    nvcc --version | Select-Object -Last 2 | ForEach-Object { Write-Host $_ }
-} else {
-    Write-Warn "nvcc not found on PATH. DeepSpeed CUDA ops need the CUDA Toolkit. Set CUDA_HOME/PATH and re-run if the build fails."
+# --- 2. Verify accelerator runtime ---------------------------------------
+Write-Step "Checking accelerator runtime for '$Accelerator'"
+switch ($Accelerator) {
+    "cuda" {
+        if (Get-Command nvcc -ErrorAction SilentlyContinue) {
+            nvcc --version | Select-Object -Last 2 | ForEach-Object { Write-Host $_ }
+        } else {
+            Write-Warn "nvcc not found. DeepSpeed CUDA ops need the CUDA Toolkit. Set CUDA_HOME/PATH and re-run if the build fails."
+        }
+    }
+    "xpu" {
+        if (Get-Command icpx -ErrorAction SilentlyContinue) {
+            Write-Host "oneAPI DPC++ (icpx) found."
+        } else {
+            Write-Warn "icpx not found. Install the Intel oneAPI Base Toolkit and run setvars.bat, then re-run. XPU also needs torch xpu + intel-extension-for-pytorch."
+        }
+    }
+    "rocm" {
+        Write-Warn "ROCm on Windows is experimental: official PyTorch ROCm wheels for Windows are not generally available. Consider WSL2 + the Linux ROCm path, or target CUDA/XPU instead."
+    }
+    default { Write-Host "CPU target: no GPU runtime required." }
 }
 
 # --- 3. Build flags -------------------------------------------------------

@@ -27,6 +27,20 @@ class ModelsPanel(VerticalScroll):
             allow_blank=False,
         )
 
+        yield Label("Accelerator backend")
+        yield Select(
+            [
+                ("auto — detect from PyTorch", "auto"),
+                ("cuda — NVIDIA", "cuda"),
+                ("rocm — AMD", "rocm"),
+                ("xpu — Intel", "xpu"),
+                ("cpu — no GPU", "cpu"),
+            ],
+            value=cfg.accelerator,
+            id="accelerator",
+            allow_blank=False,
+        )
+
         yield Static("[b]Offload (how to exceed VRAM)[/b]", classes="section-title")
         yield Label("Parameter offload device")
         yield Select(
@@ -69,6 +83,9 @@ class ModelsPanel(VerticalScroll):
         cfg: AppConfig = self.app.config  # type: ignore[attr-defined]
         cfg.model_id = self.query_one("#model-id", Input).value.strip() or cfg.model_id
         cfg.dtype = self.query_one("#dtype", Select).value  # type: ignore[assignment]
+        cfg.accelerator = self.query_one(  # type: ignore[assignment]
+            "#accelerator", Select
+        ).value
         cfg.offload.param_device = self.query_one(  # type: ignore[assignment]
             "#offload-device", Select
         ).value

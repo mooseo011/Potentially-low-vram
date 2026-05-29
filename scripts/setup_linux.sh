@@ -10,6 +10,17 @@ warn() { printf '[warn] %s\n' "$*" >&2; }
 
 PYTHON="${PYTHON:-python3}"
 BUILD_AIO="${BUILD_AIO:-1}"
+# Accelerator: cuda (NVIDIA) | rocm (AMD) | xpu (Intel) | cpu
+ACCEL="${ACCEL:-cuda}"
+
+case "$ACCEL" in
+    cuda) TORCH_INDEX="https://download.pytorch.org/whl/cu121" ;;
+    rocm) TORCH_INDEX="https://download.pytorch.org/whl/rocm6.2" ;;
+    xpu)  TORCH_INDEX="https://download.pytorch.org/whl/xpu" ;;
+    cpu)  TORCH_INDEX="https://download.pytorch.org/whl/cpu" ;;
+    *)    warn "Unknown ACCEL='$ACCEL'; defaulting to cuda"; TORCH_INDEX="https://download.pytorch.org/whl/cu121" ;;
+esac
+say "Accelerator target: $ACCEL  (torch index: $TORCH_INDEX)"
 
 say "Installing libaio dev headers (DeepNVMe prerequisite)"
 if command -v apt-get >/dev/null 2>&1; then
@@ -29,16 +40,22 @@ fi
 say "Upgrading pip build tooling"
 "$PYTHON" -m pip install --upgrade pip wheel setuptools ninja
 
-say "Installing Transformers + Accelerate"
+if [ "$ACCEL" = "rocm" ]; then
+    warn "ROCm: ensure the ROCm runtime/toolkit is installed (amdgpu-install) and ROCM_PATH is set."
+elif [ "$ACCEL" = "xpu" ]; then
+    warn "XPU: install the Intel oneAPI Base Toolkit and 'source /opt/intel/oneapi/setvars.sh' first."
+fi
+
+say "Installing PyTorch ($ACCEL) + Transformers + Accelerate"
+"$PYTHON" -m pip install torch --index-url "$TORCH_INDEX" || \
+    warn "torch install failed — adjust TORCH_INDEX to match your runtime version."
 "$PYTHON" -m pip install "transformers>=4.40" "accelerate>=0.30"
 
-cat <<'EOF'
-
-NOTE: Install a CUDA build of PyTorch matching your driver, e.g.:
-  pip install torch --index-url https://download.pytorch.org/whl/cu121
-(See https://pytorch.org/get-started/locally/ )
-
-EOF
+if [ "$ACCEL" = "xpu" ]; then
+    say "Installing Intel Extension for PyTorch + oneCCL bindings (XPU)"
+    "$PYTHON" -m pip install intel-extension-for-pytorch oneccl_bind_pt || \
+        warn "IPEX/oneccl install failed — see Intel's XPU install guide."
+fi
 
 say "Installing DeepSpeed (DS_BUILD_AIO=${BUILD_AIO} for NVMe offload)"
 DS_BUILD_AIO="${BUILD_AIO}" "$PYTHON" -m pip install deepspeed
